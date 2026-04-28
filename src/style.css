@@ -1,0 +1,20 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #181818;
+  color: white
+}
+
+h1 {
+  text-align: center;
+  font-size: 50px;
+}
+
+.main-container {
+  display: flex;
+  justify-content: center;
+}
+
+#app {
+  align-self: flex-start;
+}
