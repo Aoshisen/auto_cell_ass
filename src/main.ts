@@ -1,5 +1,5 @@
 // @see https://playgameoflife.com/info
-import { compact, flatten, map } from "lodash-es";
+import { compact } from "lodash-es";
 const app = document.getElementById("app") as HTMLCanvasElement;
 const next = document.getElementById('next')! as HTMLButtonElement;
 enum Status {
@@ -11,11 +11,18 @@ interface Item {
   y: number;
   status: Status;
 }
-const base_rule = (item: Item, item_neighbors: Item[]) => {
+const base_rule = (item: Item, item_neighbors: (Item | null)[]) => {
   const live_neighbors_count = compact(item_neighbors).filter(n => n.status === Status.Live).length;
   const rule_engine = [[0, 0, 0, 1, 0, 0, 0, 0, 0], /*死的时候 */[0, 0, 1, 1, 0, 0, 0, 0, 0] /*活的时候*/]
   return rule_engine[item.status][live_neighbors_count]
 }
+
+const DIRECTIONS = [
+  [-1, -1], [0, -1], [1, -1],
+  [-1, 0], [1, 0],
+  [-1, 1], [0, 1], [1, 1]
+];
+
 class Board<T extends Item> {
   current_board: T[][] = [];
   ctx: CanvasRenderingContext2D;
@@ -52,17 +59,10 @@ class Board<T extends Item> {
       }
     }
   }
-  flattenMap(data: T[][], callback: (item: T, index: number) => void) {
-    map(flatten(data), callback)
-  }
-
   getNeighbors(item: T) {
-    return [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].map(([dx, dy]) => {
+    return DIRECTIONS.map(([dx, dy]) => {
       const x = item.x + dx;
       const y = item.y + dy;
-      if (x < 0 || x >= this.cols || y < 0 || y >= this.rows) {
-        return null;
-      }
       return this.getItem(x, y);
     })
   }
@@ -83,7 +83,7 @@ class Board<T extends Item> {
   next() {
     this.loop((x, y) => {
       const item = this.getItem(x, y)!;
-      const next_status = base_rule(item, this.getNeighbors(item) as Item[]);
+      const next_status = base_rule(item, this.getNeighbors(item));
       const target_item = this.getItem(x, y, this.next_board)!;
       target_item.status = next_status;
     });
