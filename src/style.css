@@ -12,9 +12,14 @@ h1 {
 
 .main-container {
   display: flex;
+  gap: 10px;
   justify-content: center;
 }
 
 #app {
   align-self: flex-start;
+}
+
+#play {
+  width: 50px;
 }
