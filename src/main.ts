@@ -1,53 +1,11 @@
 // @see https://playgameoflife.com/info
-import { clamp, compact } from "lodash-es";
+import CutePeople from "./assets/Cute People Icon v2.png"
+import { base_rule_engine } from "./constance";
 const app = document.getElementById("app") as HTMLCanvasElement;
 const next = document.getElementById('next')! as HTMLButtonElement;
 const play = document.getElementById('play')! as HTMLButtonElement;
-enum Status {
-  Dead,
-  Dying,
-  Live,
-}
-interface Item {
-  x: number;
-  y: number;
-  status: Status;
-}
-const base_rule_color_map = [
-  "#161616", "#ff5050"
-]
-const base_rule = (item: Item, item_neighbors: (Item | null)[]) => {
-  const live_neighbors_count = compact(item_neighbors).filter(n => n.status === Status.Live).length;
-  const rule_engine = [[0, 0, 0, 1, 0, 0, 0, 0, 0], /*死的时候 */[0, 0, 1, 1, 0, 0, 0, 0, 0] /*活的时候*/]
-  return rule_engine[item.status][live_neighbors_count]
-}
-const dying_rule_color_map = [
-  "#161616", "#93FE02", "#ff5050"
-]
-type Rules = {
-  rule: (item: Item, item_neighbors: (Item | null)[]) => number
-  color_map: string[]
-}
-const dying_rule = (item: Item, item_neighbors: (Item | null)[]) => {
-  const live_neighbors_count = compact(item_neighbors).filter(n => n.status === Status.Live).length;
-  const rule_engine = [
-    [0, 0, 0, 2, 0, 0, 0, 0, 0], /*dead */
-    [0, 0, 0, 2, 0, 0, 0, 0, 0], /*dying*/
-    [1, 1, 2, 2, 1, 1, 1, 1, 1]  /*live */
-  ]
-  return rule_engine[item.status][live_neighbors_count]
-}
-
-const rules: Rules = {
-  rule: base_rule,
-  color_map: base_rule_color_map
-}
-
-const rules_dying: Rules = {
-  rule: dying_rule,
-  color_map: dying_rule_color_map
-}
-
+import { type RuleEngine, Status, type Item } from "./type";
+import { convertToPixel, extractGridBlock, extractPixelMatrix, getImageDataFromUrl, getStaticRules } from "./utils";
 class Board<T extends Item> {
   current_board: T[][] = [];
   ctx: CanvasRenderingContext2D;
@@ -62,7 +20,7 @@ class Board<T extends Item> {
     [-1, 0], [1, 0],
     [-1, 1], [0, 1], [1, 1]
   ];
-  rules: Rules
+  rule_engine: RuleEngine;
   constructor(public readonly width: number, public readonly height: number, public readonly itemSize: number, public readonly node: HTMLCanvasElement) {
     this.ctx = node.getContext('2d')!;
     this.cols = Math.floor(this.width / itemSize);
@@ -70,12 +28,20 @@ class Board<T extends Item> {
     this.current_board = Array.from({ length: this.cols }, () => Array(this.rows).fill(null));
     this.next_board = Array.from({ length: this.cols }, () => Array(this.rows).fill(null));
     this.is_playing = false;
-    this.rules = rules_dying;
+    this.rule_engine = base_rule_engine;
     this.node.addEventListener('click', this.canvasHandler.bind(this));
     this.loop((x, y) => {
       this.current_board[y][x] = { x, y, status: Status.Dead } as T;
       this.next_board[y][x] = { x, y, status: Status.Dead } as T;
     });
+  }
+  applyMatrix(matrix: number[][]) {
+    for (let y = 0; y < matrix.length; y++) {
+      for (let x = 0; x < matrix[y].length; x++) {
+        const item = this.getItem(x, y)!;
+        item.status = matrix[y][x]
+      }
+    }
   }
   canvasHandler(e: MouseEvent) {
     const { offsetX, offsetY } = e;
@@ -83,7 +49,7 @@ class Board<T extends Item> {
     const y = Math.floor(offsetY / this.itemSize);
     const item = this.getItem(x, y);
     if (item) {
-      item.status = (item.status === Status.Dead ? Status.Live : Status.Dead);
+      item.status = (item.status + 1) % 2;
       this.reRender();
     }
   }
@@ -118,7 +84,7 @@ class Board<T extends Item> {
     this.ctx.clearRect(0, 0, this.width, this.height);
     this.loop((x, y) => {
       const item = this.getItem(x, y)!;
-      this.ctx.fillStyle = this.rules.color_map[item.status]!;
+      this.ctx.fillStyle = this.rule_engine.color_map[item.status]!;
       this.ctx.fillRect(x * this.itemSize, y * this.itemSize, this.itemSize, this.itemSize);
     })
   }
@@ -132,7 +98,8 @@ class Board<T extends Item> {
   next() {
     this.loop((x, y) => {
       const item = this.getItem(x, y)!;
-      const next_status = this.rules.rule(item, this.getNeighbors(item));
+      const neighbors = this.getNeighbors(item).filter(item => item.status !== 0);
+      const next_status = this.rule_engine.rule[item.status][neighbors.length]
       const target_item = this.getItem(x, y, this.next_board)!;
       target_item.status = next_status;
     });
@@ -151,4 +118,15 @@ play.addEventListener("click", () => {
     board.play();
     play.innerText = "pause"
   }
+})
+
+getImageDataFromUrl(CutePeople).then(data => {
+  const matrix = extractPixelMatrix(data);
+  const subMatrix = extractGridBlock(matrix, 4, 3, 0, 0);
+  const pixelMatrix = convertToPixel(subMatrix);
+  const { color_map, rule } = getStaticRules(pixelMatrix);
+  board.rule_engine = { rule, color_map }
+  board.applyMatrix(rule)
+  board.reRender();
+  console.log("subMatrix", color_map, rule)
 })
