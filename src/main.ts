@@ -1,5 +1,5 @@
 // @see https://playgameoflife.com/info
-import { compact } from "lodash-es";
+import { clamp, compact } from "lodash-es";
 const app = document.getElementById("app") as HTMLCanvasElement;
 const next = document.getElementById('next')! as HTMLButtonElement;
 const play = document.getElementById('play')! as HTMLButtonElement;
@@ -32,7 +32,7 @@ const dying_rule = (item: Item, item_neighbors: (Item | null)[]) => {
   const live_neighbors_count = compact(item_neighbors).filter(n => n.status === Status.Live).length;
   const rule_engine = [
     [0, 0, 0, 2, 0, 0, 0, 0, 0], /*dead */
-    [0, 0, 0, 0, 0, 0, 0, 0, 0], /*dying*/
+    [0, 0, 0, 2, 0, 0, 0, 0, 0], /*dying*/
     [1, 1, 2, 2, 1, 1, 1, 1, 1]  /*live */
   ]
   return rule_engine[item.status][live_neighbors_count]
@@ -123,10 +123,11 @@ class Board<T extends Item> {
     })
   }
   getItem(x: number, y: number, data = this.current_board) {
-    if (x < 0 || x >= this.cols || y < 0 || y >= this.rows) {
-      return null;
-    }
-    return data[y][x];
+    // 处理 X 轴环绕
+    const _x = (x % this.cols + this.cols) % this.cols;
+    // 处理 Y 轴环绕
+    const _y = (y % this.rows + this.rows) % this.rows;
+    return data[_y][_x];
   }
   next() {
     this.loop((x, y) => {
