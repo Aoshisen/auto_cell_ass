@@ -109,7 +109,7 @@ export const convertToPixel = (matrix: SimpleRGBA[][]) => {
 		});
 	});
 }
-export const getStaticRules = (data: string[][]) => {
+export const getRuleEngine = (data: string[][]) => {
 	const colorSet = new Set<string>();
 	for (const row of data) {
 		for (const color of row) {

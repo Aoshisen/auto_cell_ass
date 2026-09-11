@@ -5,7 +5,7 @@ const app = document.getElementById("app") as HTMLCanvasElement;
 const next = document.getElementById('next')! as HTMLButtonElement;
 const play = document.getElementById('play')! as HTMLButtonElement;
 import { type RuleEngine, Status, type Item } from "./type";
-import { convertToPixel, extractGridBlock, extractPixelMatrix, getImageDataFromUrl, getStaticRules } from "./utils";
+import { convertToPixel, extractGridBlock, extractPixelMatrix, getImageDataFromUrl, getRuleEngine } from "./utils";
 class Board<T extends Item> {
   current_board: T[][] = [];
   ctx: CanvasRenderingContext2D;
@@ -122,11 +122,10 @@ play.addEventListener("click", () => {
 
 getImageDataFromUrl(CutePeople).then(data => {
   const matrix = extractPixelMatrix(data);
-  const subMatrix = extractGridBlock(matrix, 4, 3, 0, 0);
+  const subMatrix = extractGridBlock(matrix, 1, 1, 0, 0);
   const pixelMatrix = convertToPixel(subMatrix);
-  const { color_map, rule } = getStaticRules(pixelMatrix);
+  const { color_map, rule } = getRuleEngine(pixelMatrix);
   board.rule_engine = { rule, color_map }
   board.applyMatrix(rule)
   board.reRender();
-  console.log("subMatrix", color_map, rule)
 })
