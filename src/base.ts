@@ -5,14 +5,19 @@ export class BaseBoard {
 	matrix: number[][] = [];
 	ctx: CanvasRenderingContext2D;
 	//行
-	cols: number;
+	cols!: number;
 	//列
-	rows: number;
-	constructor(public readonly width: number, public readonly height: number, public readonly itemSize: number, public readonly node: HTMLCanvasElement) {
+	rows!: number;
+	constructor(public width: number, public height: number, public readonly itemSize: number, public readonly node: HTMLCanvasElement) {
 		this.ctx = node.getContext('2d')!;
+		this.resize(width, height);
+	}
+	/** 重设画布尺寸，并按新尺寸重建矩阵 */
+	resize(width: number, height: number) {
+		this.width = width;
+		this.height = height;
 		this.node.width = width;
 		this.node.height = height;
-		this.itemSize = itemSize;
 		// 列数由宽度决定，行数由高度决定
 		this.cols = Math.ceil(this.width / this.itemSize);
 		this.rows = Math.ceil(this.height / this.itemSize);
@@ -64,9 +69,27 @@ export class BaseBoard {
 export class PaletteBoard extends BaseBoard {
 	colors: string[];
 	activeIndex = 0;
-	constructor(width: number, height: number, itemSize: number, node: HTMLCanvasElement, colors: string[]) {
+	/** 每行放几个颜色，不传则一行排开 */
+	columns?: number;
+	constructor(itemSize: number, node: HTMLCanvasElement, colors: string[], columns?: number) {
+		const { width, height } = PaletteBoard.measure(colors.length, itemSize, columns);
 		super(width, height, itemSize, node);
 		this.colors = colors;
+		this.columns = columns;
+	}
+	/** 根据颜色数量算出画布宽高 */
+	static measure(colorCount: number, itemSize: number, columns?: number) {
+		const cols = Math.max(1, Math.min(columns ?? colorCount, colorCount));
+		const rows = Math.max(1, Math.ceil(colorCount / cols));
+		return { width: cols * itemSize, height: rows * itemSize };
+	}
+	/** 换一组颜色并重新计算画布尺寸 */
+	setColors(colors: string[]) {
+		this.colors = colors;
+		this.activeIndex = Math.min(this.activeIndex, Math.max(0, colors.length - 1));
+		const { width, height } = PaletteBoard.measure(colors.length, this.itemSize, this.columns);
+		this.resize(width, height);
+		this.reRender();
 	}
 	get activeColor() {
 		return this.colors[this.activeIndex];
@@ -112,11 +135,12 @@ export class Board extends BaseBoard {
 		[-1, 1], [0, 1], [1, 1]
 	];
 	rule_engine: RuleEngine;
-	constructor(width: number, height: number, itemSize: number, node: HTMLCanvasElement, rule_engine: RuleEngine) {
+	constructor(width: number, height: number, itemSize: number, node: HTMLCanvasElement, rule_engine: RuleEngine, initMatrix?: number[][]) {
 		super(width, height, itemSize, node);
 		this.next_matrix = this.createMatrix(this.cols, this.rows);
 		this.is_playing = false;
 		this.rule_engine = rule_engine;
+		if (initMatrix) this.applyMatrix(initMatrix);
 	}
 	applyMatrix(matrix: number[][]) {
 		for (let y = 0; y < matrix.length; y++) {
