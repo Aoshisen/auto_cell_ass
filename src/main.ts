@@ -1,6 +1,6 @@
 // @see https://playgameoflife.com/info
 import { Board, PaletteBoard } from "./base";
-import { base_rule_engine, dying_rule_engine } from "./constance";
+import { base_rule_engine } from "./constance";
 import { convertToPixel, extractGridBlock, extractPixelMatrix, getImageDataFromUrl, getRuleEngine } from "./utils";
 import type { RuleEngine } from "./type";
 import CutePeople from "./assets/Cute People Icon v2.png"
