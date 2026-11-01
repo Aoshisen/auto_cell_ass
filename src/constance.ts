@@ -21,15 +21,13 @@ export const base_rule_engine: RuleEngine = {
 export const dying_rule_engine: RuleEngine = {
 	rule: [
 		{ /* Dead：恰好 3 个 Live 邻居 -> Live */
-			"053": 2, "143": 2, "233": 2, "323": 2, "413": 2, "503": 2,
-			"default": 0,
-		},
-		{ /* Dying：下一帧一律变回 Dead */
-			"default": 0,
-		},
-		{ /* Live：2 或 3 个 Live 邻居 -> 存活，否则进入 Dying */
 			"062": 2, "152": 2, "242": 2, "332": 2, "422": 2, "512": 2, "602": 2,
-			"053": 2, "143": 2, "233": 2, "323": 2, "413": 2, "503": 2,
+			"default": 0,
+		},
+		{
+			"default": 0,
+		},
+		{
 			"default": 1,
 		}
 	],
