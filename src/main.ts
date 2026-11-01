@@ -1,6 +1,6 @@
 // @see https://playgameoflife.com/info
 import { Board, PaletteBoard } from "./base";
-import { dying_rule_engine } from "./constance";
+import { base_rule_engine, dying_rule_engine } from "./constance";
 import { convertToPixel, extractGridBlock, extractPixelMatrix, getImageDataFromUrl, getRuleEngine } from "./utils";
 import type { RuleEngine } from "./type";
 import CutePeople from "./assets/Cute People Icon v2.png"
@@ -11,7 +11,7 @@ const next = $("#next") as HTMLButtonElement;
 const play = $("#play") as HTMLButtonElement;
 const palette = $("#palette") as HTMLCanvasElement;
 
-const CUTE_PEOPLE = true;
+const CUTE_PEOPLE = false;
 const BOARD_SIZE = 700;
 const ITEM_SIZE = 10;
 const PALETTE_ITEM_SIZE = 30;
@@ -60,5 +60,5 @@ if (CUTE_PEOPLE) {
     mount({ rule, color_map }, initMatrix);
   });
 } else {
-  mount(dying_rule_engine);
+  mount(base_rule_engine);
 }
