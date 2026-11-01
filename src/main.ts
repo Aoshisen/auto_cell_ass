@@ -1,6 +1,6 @@
 // @see https://playgameoflife.com/info
 import { Board, PaletteBoard } from "./base";
-import { base_rule_engine, dying_rule_engine } from "./constance";
+import { dying_rule_engine } from "./constance";
 import { convertToPixel, extractGridBlock, extractPixelMatrix, getImageDataFromUrl, getRuleEngine } from "./utils";
 import CutePeople from "./assets/Cute People Icon v2.png"
 const $: (e: string) => any = (selection) => document.querySelector(selection)
@@ -14,7 +14,7 @@ let active_status = 0;
 const RULE_ENGINE = dying_rule_engine
 
 
-const CUTE_PEOPLE = false;
+const CUTE_PEOPLE = true
 
 if (CUTE_PEOPLE) {
   getImageDataFromUrl(CutePeople).then(data => {
@@ -24,7 +24,7 @@ if (CUTE_PEOPLE) {
     const pixelMatrix = convertToPixel(subMatrix);
     const cute_people_engine = getRuleEngine(pixelMatrix);
     const board = new Board(700, 700, 10, app, cute_people_engine);
-    board.applyMatrix(cute_people_engine.rule)
+    board.applyMatrix(cute_people_engine.initMatrix)
     board.reRender();
 
     // 点击棋盘时，把格子设成调色板选中的状态
@@ -41,6 +41,17 @@ if (CUTE_PEOPLE) {
       active_status = index;
       palette_board.activeIndex = index;
       palette_board.reRender();
+    })
+
+    next.addEventListener("click", board.next.bind(board))
+    play.addEventListener("click", () => {
+      if (board.is_playing) {
+        board.pause()
+        play.innerText = "play"
+      } else {
+        board.play();
+        play.innerText = "pause"
+      }
     })
   })
 
